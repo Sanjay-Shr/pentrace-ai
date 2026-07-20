@@ -168,10 +168,16 @@ def classify(state: AnalysisState) -> dict[str, Any]:
     )
 
     try:
+        raw_chunks = state.get("owasp_chunks", [])
+        owasp_strings = [
+            c["content"] if isinstance(c, dict) else c
+            for c in raw_chunks
+        ]
+
         result = classify_finding(
             finding_description=finding_description,
             http_exchanges=http_exchanges,
-            owasp_context=state.get("owasp_chunks", []),
+            owasp_context=owasp_strings,
             cve_context=cve_context,
         )
     except RuntimeError as exc:
