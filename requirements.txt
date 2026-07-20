@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+langgraph
+langchain
+langchain-openai
+chromadb
+httpx
+python-dotenv
+openai
+gradio
+pydantic
+pytest
