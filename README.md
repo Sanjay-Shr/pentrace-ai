@@ -1,14 +1,3 @@
----
-title: PentraceAI
-emoji: 🔐
-colorFrom: blue
-colorTo: red
-sdk: docker
-app_port: 7860
-pinned: true
-license: mit
----
-
 # 🔐 PentraceAI — Agentic API Vulnerability Scanner
 
 An autonomous 3-agent AI security pipeline that probes APIs for OWASP vulnerabilities,
