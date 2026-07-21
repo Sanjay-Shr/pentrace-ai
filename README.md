@@ -1,3 +1,14 @@
+---
+title: PentraceAI
+emoji: 🔐
+colorFrom: blue
+colorTo: red
+sdk: docker
+app_port: 7860
+pinned: false
+license: mit
+---
+
 # 🔐 PentraceAI — Agentic API Vulnerability Scanner
 
 An autonomous 3-agent AI security pipeline that probes APIs for OWASP vulnerabilities,
@@ -16,7 +27,7 @@ correlates real CVE data, and delivers a structured verdict — fully automated,
 Pick a scenario and hit **▶ Run Scan**:
 
 - 🔴 **BOLA** — Broken Object Level Authorization (A01:2025)
-- 🟡 **Broken Auth** — Broken Authentication (A02:2025)  
+- 🟡 **Broken Auth** — Broken Authentication (A02:2025)
 - 🟢 **False Positive** — Legitimate request correctly cleared
 
 ## 🛠️ Tech Stack
@@ -24,22 +35,6 @@ Pick a scenario and hit **▶ Run Scan**:
 - **Python 3.11** · **LangGraph** · **Azure OpenAI GPT-4.1-mini**
 - **Azure Embeddings** · **ChromaDB** · **FastAPI** · **Streamlit**
 - **NVD CVE API** · **OWASP Top 10 2025**
-
-## ⚙️ Architecture
-
-```
-User → Streamlit UI
-         ↓
-    Orchestrator (LangGraph)
-         ↓
-    ReconAgent → FastAPI Sandbox + NVD API
-         ↓
-    AnalysisAgent → ChromaDB (OWASP RAG) + Azure OpenAI
-         ↓
-    ReportAgent → Structured JSON Report
-         ↓
-    Streamlit UI ← streaming events
-```
 
 ## 👤 Built by
 
