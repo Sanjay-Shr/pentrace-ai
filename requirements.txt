@@ -10,3 +10,4 @@ openai
 gradio
 pydantic
 pytest
+streamlit>=1.35.0

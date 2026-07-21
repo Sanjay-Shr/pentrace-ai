@@ -645,3 +645,106 @@ def check_fix_applied(
         probe=new_probe,
         explanation=explanation,
     )
+
+# ── generate_report ───────────────────────────────────────────────────────────
+
+def generate_report(
+    target_url: str,
+    vulnerability_type: str,
+    classification: ClassificationResult,
+    http_exchanges: list[ProbeResult],
+    cve_entries: list[CVEEntry],
+    pipeline_errors: list[str],
+    generated_at: str,
+) -> dict[str, Any]:
+    """
+    Assemble the final structured pentest report from all pipeline outputs.
+
+    No LLM call here — all reasoning was done in AnalysisAgent.
+    This function purely structures the data into a report schema.
+
+    Args:
+        target_url:          The URL that was tested.
+        vulnerability_type:  Human label for the vulnerability tested.
+        classification:      Verdict, confidence, reasoning, fix from AnalysisAgent.
+        http_exchanges:      Raw HTTP evidence from ReconAgent.
+        cve_entries:         CVE records from NVD.
+        pipeline_errors:     Any non-fatal errors from upstream agents.
+        generated_at:        ISO 8601 timestamp of report generation.
+
+    Returns:
+        A fully structured report dict ready for display or JSON export.
+    """
+    import uuid
+
+    verdict    = classification["verdict"]
+    confidence = classification["confidence"]
+
+    # Map verdict + confidence to a severity rating for the report header
+    severity = _severity_from_verdict(verdict, confidence)
+
+    report = {
+        "report_id":          str(uuid.uuid4())[:8].upper(),
+        "generated_at":       generated_at,
+        "target_url":         target_url,
+        "vulnerability_type": vulnerability_type,
+        "severity":           severity,
+
+        "finding": {
+            "verdict":          verdict,
+            "confidence":       confidence,
+            "owasp_category":   classification["owasp_category"],
+            "reasoning":        classification["reasoning"],
+            "recommended_fix":  classification["recommended_fix"],
+        },
+
+        "evidence": {
+            "http_exchanges": [
+                {
+                    "label":       ex.get("label", "unknown"),
+                    "method":      ex.get("method", "GET"),
+                    "url":         ex.get("url", target_url),
+                    "status_code": ex.get("status_code"),
+                    "latency_ms":  ex.get("latency_ms"),
+                    "body_preview": (ex.get("response_body") or "")[:300],
+                }
+                for ex in http_exchanges
+            ],
+            "cve_references": [
+                {
+                    "cve_id":      cve["cve_id"],
+                    "severity":    cve["severity"],
+                    "cvss_score":  cve["cvss_score"],
+                    "description": cve["description"][:200],
+                    "reference":   cve.get("reference", ""),
+                }
+                for cve in cve_entries
+            ],
+        },
+
+        "pipeline": {
+            "agents_run":    ["ReconAgent", "AnalysisAgent", "ReportAgent"],
+            "errors":        pipeline_errors,
+            "clean_run":     len(pipeline_errors) == 0,
+        },
+    }
+
+    logger.info(
+        "generate_report | report_id=%s | severity=%s | verdict=%s | cves=%d | exchanges=%d",
+        report["report_id"],
+        severity,
+        verdict,
+        len(cve_entries),
+        len(http_exchanges),
+    )
+
+    return report
+
+
+def _severity_from_verdict(verdict: str, confidence: str) -> str:
+    """Map verdict + confidence to a severity label for the report header."""
+    if verdict == "TRUE_POSITIVE":
+        return "HIGH" if confidence == "HIGH" else "MEDIUM"
+    if verdict == "NEEDS_INVESTIGATION":
+        return "MEDIUM"
+    return "INFORMATIONAL"
